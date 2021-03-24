@@ -1,0 +1,17 @@
+#!/bin/bash
+##
+## Return the wifi band used on specified wifi interface.
+##
+
+# Check if exactly one argument is passed.
+if [ $# -eq 1 ]; then
+  # on test success, will print some info on wifi band.
+  iw dev $1 info | grep channel
+else
+  # otherwise help is printed.
+  echo 'WireLess Band Control ('$0')'
+  echo '	Usage: '$0' <device>'
+  echo ''
+  echo '	Where:'
+  echo '		<device>	name of the device to check.'
+fi

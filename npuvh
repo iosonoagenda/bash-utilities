@@ -1,0 +1,15 @@
+#!/bin/bash
+##
+## Get all enabled sites of nginx.
+##
+
+# Check nginx existence on system
+NGINX_EXISTS=$(which nginx 2>/dev/null)
+if [ -z "$NGINX_EXISTS" ]; then
+  # if not found, an error status will be returned
+  echo 'nginx should be installed to use this command.'
+  exit 1
+else
+  # otherwise return the list of currents sites enabled
+  grep listen /etc/nginx/sites-enabled/*
+fi

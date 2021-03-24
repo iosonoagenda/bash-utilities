@@ -1,0 +1,111 @@
+#!/bin/bash
+
+NGINX_EXISTS=$(which nginx 2>/dev/null)
+
+if [ -z "$NGINX_EXISTS" ]; then
+  echo 'nginx should be installed to use this command.'
+  printf 'Do you want to install it now? [Y/n]: '
+  read WANT_INSTALL_NGINX
+  if [ -z "$WANT_INSTALL_NGINX" ]; then
+    sudo apt install nginx -y
+  else
+    WANT_INSTALL_NGINX=$(echo "$WANT_INSTALL_NGINX" | grep -i 'y')
+    if [ -z "$WANT_INSTALL_NGINX" ]; then
+      echo 'Aborting.'
+      exit 1
+    else
+      sudo apt install nginx -y
+    fi
+  fi
+fi
+
+if [ $# -lt 3 ]
+then
+	echo 'Usage: nginxvh <virtual_host_name> <html|php|wordpress|laravel|remove> <port>'
+else
+	if [ $2 == 'remove' ]
+	then
+		rm /etc/nginx/sites-available/$1
+		rm /etc/nginx/sites-enabled/$1
+		rm -R /var/www/$1
+		service nginx restart
+	else
+		WWWUSER='root'
+		PHPV=$(php -v | grep -o -E 'PHP [0-9]+.[0-9]+' | tr [:upper:] [:lower:])
+		ISFMW=($2 == 'wordpress' or $2 == 'laravel')
+		ISDYN=($2 == 'php' or $ISFMW)
+		HOSTPATH="/etc/nginx/sites-available/$1"
+		if [[ -f '/etc/nginxvh.conf' ]]; then
+			WWWUSER=$(head -n 1 /etc/nginxvh.conf)
+		else
+			read -p '/var/www username to use: ' WWWUSER
+			echo $WWWUSER > /etc/nginxvh.conf
+		fi
+		echo 'server {' >> $HOSTPATH
+		echo '	listen '$3';' >> $HOSTPATH
+		echo '	server_name 192.168.1.81;' >> $HOSTPATH
+		if [ $ISDYN ]
+		then
+			echo '	access_log /var/log/nginx/php.access.log;' >> $HOSTPATH
+			echo '	error_log /var/log/nginx/php.error.log;' >> $HOSTPATH
+		fi
+		if [ $2 == 'laravel' ]
+		then
+			echo '	root /var/www/'$1'/public;' >> $HOSTPATH
+		else
+			echo '	root /var/www/'$1';' >> $HOSTPATH
+		fi
+		if [ $ISDYN ]
+		then
+			echo '	index index.php index.html index.htm;' >> $HOSTPATH
+		else
+			echo '	index index.html index.htm;' >> $HOSTPATH
+		fi
+		echo '	location / {' >> $HOSTPATH
+		if [ $ISDYN ]
+		then
+			echo '		try_files $uri $uri/ /index.php?$query_string;' >> $HOSTPATH
+		else
+			echo '		try_files $uri $uri/ /index.html;' >> $HOSTPATH
+		fi
+		if [ $ISFMW ]
+		then
+			echo '		error_page 404 = @'$2';' >> $HOSTPATH
+		fi
+		echo '	}' >> $HOSTPATH
+		echo '	error_page 500 502 503 504 /50x.html;' >> $HOSTPATH
+		echo '	location = /50x.html {' >> $HOSTPATH
+		echo '		root /var/www/'$1';' >> $HOSTPATH
+		echo '	}' >> $HOSTPATH
+		if [ $ISDYN ]
+		then
+			echo '	location ~ \.php$ {' >> $HOSTPATH
+			echo '		try_files $uri =404;' >> $HOSTPATH
+			echo '		fastcgi_pass unix:/var/run/php/'${PHPV/ /}'-fpm.sock;' >> $HOSTPATH
+			echo '		fastcgi_index index.php;' >> $HOSTPATH
+			echo '		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;' >> $HOSTPATH
+			echo '		include fastcgi_params;' >> $HOSTPATH
+			echo '	}' >> $HOSTPATH
+		fi
+		if [ $ISFMW ]
+		then
+			echo '	location @'$2' {' >> $HOSTPATH
+			echo '		rewrite ^(.*)$ /index.php?$query_string last;' >> $HOSTPATH
+			echo '	}' >> $HOSTPATH
+		fi
+		echo '}' >> $HOSTPATH
+		mkdir /var/www/$1
+		if [ $2 == 'php' ]
+		then
+			echo '<?php phpinfo(); ?>' >> /var/www/$1/index.php
+		else
+			if [ $2 == 'html' ]
+			then
+				echo '<h1>It Works!</h1>' >> /var/www/$1/index.html
+			fi
+		fi
+		ln -s $HOSTPATH /etc/nginx/sites-enabled/$1
+		service nginx restart
+		chown -R $WWWUSER:www-data /var/www/$1
+	fi
+fi
