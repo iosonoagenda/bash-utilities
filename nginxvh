@@ -107,5 +107,6 @@ else
 		ln -s $HOSTPATH /etc/nginx/sites-enabled/$1
 		service nginx restart
 		chown -R $WWWUSER:www-data /var/www/$1
+		chmod -R 7775 /var/www/$1
 	fi
 fi
