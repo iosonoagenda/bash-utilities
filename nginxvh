@@ -31,7 +31,7 @@ then
 	echo 'Usage: nginxvh <virtual_host_name> <html|php|wordpress|laravel|remove> [<port>]'
 	echo ''
 	echo 'Where:'
-	echo "\tport: optional only with remove parameter, otherwise required!"
+	echo '	port: optional only with remove parameter, otherwise required!'
 else
 	if [ $2 == 'remove' ]
 	then
