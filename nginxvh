@@ -19,10 +19,10 @@ if [ -z "$NGINX_EXISTS" ]; then
 	NGINXVH_OS_INFO[/etc/SuSE-release]='zypp install'
 	NGINXVH_OS_INFO[/etc/debian_version]='apt install'
 	
-	for f in ${!osInfo[@]}
+	for f in ${!NGINXVH_OS_INFO[@]}
 	do
     		if [[ -f $f ]]; then
-        		NGINXVH_PMAN=${osInfo[$f]}
+        		NGINXVH_PMAN=${NGINXVH_OS_INFO[$f]}
     		fi
 	done
 	
