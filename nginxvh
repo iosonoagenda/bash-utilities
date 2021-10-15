@@ -13,11 +13,11 @@ if [ -z "$NGINX_EXISTS" ]; then
 	NGINXVH_PMAN=''
 	
 	declare -A NGINXVH_OS_INFO;
-	NGINXVH_OS_INFO[redhat]='yum install -y'
+	NGINXVH_OS_INFO[redhat]='yum -y install'
 	NGINXVH_OS_INFO[arch]='pacman -S --noconfirm'
 	NGINXVH_OS_INFO[gentoo]='emerge'
-	NGINXVH_OS_INFO[opensuse]='zypper install -n'
-	NGINXVH_OS_INFO[debian]='apt install -y'
+	NGINXVH_OS_INFO[opensuse]='zypper -n install'
+	NGINXVH_OS_INFO[debian]='apt -y install'
 	
 	NGINXVH_DISTRO=$(grep -i 'id_like' /etc/os-release | cut -d'=' -f 2 | cut -d' ' -f 1)
 	NGINXVH_DISTRO="${NGINXVH_DISTRO//[\"]/''}"
