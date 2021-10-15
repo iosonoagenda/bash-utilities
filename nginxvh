@@ -10,18 +10,34 @@ fi
 NGINX_EXISTS=$(which nginx 2>/dev/null)
 
 if [ -z "$NGINX_EXISTS" ]; then
+	NGINXVH_PMAN=''
+	
+	declare -A NGINXVH_OS_INFO;
+	NGINXVH_OS_INFO[/etc/redhat-release]='yum install'
+	NGINXVH_OS_INFO[/etc/arch-release]='pacman -S'
+	NGINXVH_OS_INFO[/etc/gentoo-release]='emerge'
+	NGINXVH_OS_INFO[/etc/SuSE-release]='zypp install'
+	NGINXVH_OS_INFO[/etc/debian_version]='apt install'
+	
+	for f in ${!osInfo[@]}
+	do
+    		if [[ -f $f ]]; then
+        		NGINXVH_PMAN=${osInfo[$f]}
+    		fi
+	done
+	
 	echo 'nginx should be installed to use this command.'
 	printf 'Do you want to install it now? [Y/n]: '
 	read WANT_INSTALL_NGINX
 	if [ -z "$WANT_INSTALL_NGINX" ]; then
-		apt install nginx -y
+		/bin/bash -c "$NGINXVH_PMAN nginx -y"
 	else
 		WANT_INSTALL_NGINX=$(echo "$WANT_INSTALL_NGINX" | grep -i 'y')
 		if [ -z "$WANT_INSTALL_NGINX" ]; then
 			echo 'Aborting.'
 			exit 1
 		else
-			apt install nginx -y
+			/bin/bash -c "$NGINXVH_PMAN nginx -y"
 		fi
 	fi
 fi
