@@ -13,11 +13,11 @@ if [ -z "$NGINX_EXISTS" ]; then
 	NGINXVH_PMAN=''
 	
 	declare -A NGINXVH_OS_INFO;
-	NGINXVH_OS_INFO[redhat]='yum install'
+	NGINXVH_OS_INFO[redhat]='yum install -y'
 	NGINXVH_OS_INFO[arch]='pacman -S --noconfirm'
 	NGINXVH_OS_INFO[gentoo]='emerge'
-	NGINXVH_OS_INFO[opensuse]='zypper install'
-	NGINXVH_OS_INFO[debian]='apt install'
+	NGINXVH_OS_INFO[opensuse]='zypper install -n'
+	NGINXVH_OS_INFO[debian]='apt install -y'
 	
 	NGINXVH_DISTRO=$(grep -i 'id_like' /etc/os-release | cut -d'=' -f 2 | cut -d' ' -f 1)
 	NGINXVH_DISTRO="${NGINXVH_DISTRO//[\"]/''}"
@@ -27,14 +27,14 @@ if [ -z "$NGINX_EXISTS" ]; then
 	printf 'Do you want to install it now? [Y/n]: '
 	read WANT_INSTALL_NGINX
 	if [ -z "$WANT_INSTALL_NGINX" ]; then
-		/bin/bash -c "$NGINXVH_PMAN nginx -y"
+		/bin/bash -c "$NGINXVH_PMAN nginx"
 	else
 		WANT_INSTALL_NGINX=$(echo "$WANT_INSTALL_NGINX" | grep -i 'y')
 		if [ -z "$WANT_INSTALL_NGINX" ]; then
 			echo 'Aborting.'
 			exit 1
 		else
-			/bin/bash -c "$NGINXVH_PMAN nginx -y"
+			/bin/bash -c "$NGINXVH_PMAN nginx"
 		fi
 	fi
 fi
