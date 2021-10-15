@@ -19,10 +19,11 @@ if [ -z "$NGINX_EXISTS" ]; then
 	NGINXVH_OS_INFO[zypper]='zypper -n install'
 	NGINXVH_OS_INFO[apt]='apt -y install'
 	
-	for curr in "${NGINXVH_OS_INFO[@]}"
+	for curr in "${!NGINXVH_OS_INFO[@]}"
 	do
-		if [ -x "$(which $curr)" ]: then
-			NGINX_PMAN="$curr"
+		if [ -x "$(which $curr 2>/dev/null)" ]; then
+			NGINXVH_PMAN="${NGINXVH_OS_INFO[$curr]}"
+			break 1
 		fi
 	done
 	
