@@ -13,18 +13,15 @@ if [ -z "$NGINX_EXISTS" ]; then
 	NGINXVH_PMAN=''
 	
 	declare -A NGINXVH_OS_INFO;
-	NGINXVH_OS_INFO[/etc/redhat-release]='yum install'
-	NGINXVH_OS_INFO[/etc/arch-release]='pacman -S --noconfirm'
-	NGINXVH_OS_INFO[/etc/gentoo-release]='emerge'
-	NGINXVH_OS_INFO[/etc/SuSE-release]='zypp install'
-	NGINXVH_OS_INFO[/etc/debian_version]='apt install'
+	NGINXVH_OS_INFO[redhat]='yum install'
+	NGINXVH_OS_INFO[arch]='pacman -S --noconfirm'
+	NGINXVH_OS_INFO[gentoo]='emerge'
+	NGINXVH_OS_INFO[opensuse]='zypp install'
+	NGINXVH_OS_INFO[debian]='apt install'
 	
-	for f in ${!NGINXVH_OS_INFO[@]}
-	do
-    		if [[ -f $f ]]; then
-        		NGINXVH_PMAN=${NGINXVH_OS_INFO[$f]}
-    		fi
-	done
+	NGINXVH_DISTRO=$(grep -i 'id_like' /etc/os-release | cut -d'=' -f 2 | cut -d' ' -f 1)
+	NGINXVH_DISTRO="${NGINXVH_DISTRO//[\"]/''}"
+	NGINXVH_PMAN=${NGINXVH_OS_INFO[$NGINXVH_DISTRO]}
 	
 	echo 'nginx should be installed to use this command.'
 	printf 'Do you want to install it now? [Y/n]: '
