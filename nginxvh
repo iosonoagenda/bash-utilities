@@ -14,7 +14,7 @@ if [ -z "$NGINX_EXISTS" ]; then
 	
 	declare -A NGINXVH_OS_INFO;
 	NGINXVH_OS_INFO[/etc/redhat-release]='yum install'
-	NGINXVH_OS_INFO[/etc/arch-release]='pacman -S'
+	NGINXVH_OS_INFO[/etc/arch-release]='pacman -S --noconfirm'
 	NGINXVH_OS_INFO[/etc/gentoo-release]='emerge'
 	NGINXVH_OS_INFO[/etc/SuSE-release]='zypp install'
 	NGINXVH_OS_INFO[/etc/debian_version]='apt install'
