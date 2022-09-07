@@ -1,0 +1,63 @@
+#!/bin/bash
+
+UP_ALL_IS_ROOT_RUNNING=$(whoami | grep -i 'root')
+
+if [ -z "$UP_ALL_IS_ROOT_RUNNING" ]; then
+	echo 'root privileges required!'
+	exit 1
+fi
+
+UP_ALL_SCREEN=$(which screen 2>/dev/null)
+
+UP_ALL_CMD=''
+UP_ALL_INSTALL=''
+
+declare -A UP_ALL_INSTALLS;
+UP_ALL_INSTALLS[dnf]='dnf install -y'
+UP_ALL_INSTALLS[apt]='apt install -y'
+
+declare -A UP_ALL_CMDS;
+UP_ALL_CMDS[dnf]='dnf upgrade -y && dnf autoremove -y'
+UP_ALL_CMDS[apt]='apt update && apt upgrade -y && apt dist-upgrade -y && apt autoremove -y'
+
+up_all_screen_install () {
+    /bin/bash -c "$UP_ALL_INSTALL screen"
+}
+
+for curr in "${!UP_ALL_CMDS[@]}"
+do
+    if [ -x "$(which $curr 2>/dev/null)" ]; then
+        UP_ALL_CMD="${UP_ALL_CMDS[$curr]}"
+        UP_ALL_INSTALL="${UP_ALL_INSTALLS[$curr]}"
+        break 1
+    fi
+done
+
+if [ -z "$UP_ALL_CMD" ]; then
+    echo 'Sorry, your system is not supported yet'
+    exit 1
+fi
+
+if [ -z "$UP_ALL_SCREEN" ]; then
+    printf 'screen command is required. Install it now? [Y/n]: '
+    read UP_ALL_SCREEN_INSTALL
+    if [ -z "$UP_ALL_SCREEN_INSTALL" ]; then
+        up_all_screen_install
+    else
+        UP_ALL_SCREEN_INSTALL=$(echo "$UP_ALL_SCREEN_INSTALL" | grep -i 'y')
+		if [ -z "$UP_ALL_SCREEN_INSTALL" ]; then
+			echo 'Aborting.'
+			exit 1
+		else
+            up_all_screen_install
+		fi
+    fi
+fi
+
+UP_ALL_EXECUTED=$(screen -ls up-all | grep up-all)
+
+if [ -z "$UP_ALL_EXECUTED" ]; then
+    screen -S up-all bash -c "$UP_ALL_CMD"
+else
+    screen -r up-all
+fi

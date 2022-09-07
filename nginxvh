@@ -1,19 +1,19 @@
 #!/bin/bash
 
-IS_ROOT_RUNNING=$(groups | grep -i 'root')
+NGINXVH_IS_ROOT_RUNNING=$(whoami | grep -i 'root')
 
-if [ -z "$IS_ROOT_RUNNING" ]; then
+if [ -z "$NGINXVH_IS_ROOT_RUNNING" ]; then
 	echo 'root privileges required!'
 	exit 1
 fi
 
-NGINX_EXISTS=$(which nginx 2>/dev/null)
+NGINXVH_NGINX_EXISTS=$(which nginx 2>/dev/null)
 
-if [ -z "$NGINX_EXISTS" ]; then
+if [ -z "$NGINXVH_NGINX_EXISTS" ]; then
 	NGINXVH_PMAN=''
 	
 	declare -A NGINXVH_OS_INFO;
-	NGINXVH_OS_INFO[yum]='yum -y install'
+	NGINXVH_OS_INFO[dnf]='dnf -y install'
 	NGINXVH_OS_INFO[pacman]='pacman -S --noconfirm'
 	NGINXVH_OS_INFO[emerge]='emerge'
 	NGINXVH_OS_INFO[zypper]='zypper -n install'
@@ -27,18 +27,23 @@ if [ -z "$NGINX_EXISTS" ]; then
 		fi
 	done
 	
+	if [ -z "$NGINXVH_PMAN" ]; then
+		echo 'Sorry, your system is not supported yet'
+		exit 1
+	fi
+
 #	NGINXVH_DISTRO=$(grep -i 'id_like' /etc/os-release | cut -d'=' -f 2 | cut -d' ' -f 1)
 #	NGINXVH_DISTRO="${NGINXVH_DISTRO//[\"]/''}"
 #	NGINXVH_PMAN=${NGINXVH_OS_INFO[$NGINXVH_DISTRO]}
 	
 	echo 'nginx should be installed to use this command.'
 	printf 'Do you want to install it now? [Y/n]: '
-	read WANT_INSTALL_NGINX
-	if [ -z "$WANT_INSTALL_NGINX" ]; then
+	read NGINXVH_WANT_INSTALL_NGINX
+	if [ -z "$NGINXVH_WANT_INSTALL_NGINX" ]; then
 		/bin/bash -c "$NGINXVH_PMAN nginx"
 	else
-		WANT_INSTALL_NGINX=$(echo "$WANT_INSTALL_NGINX" | grep -i 'y')
-		if [ -z "$WANT_INSTALL_NGINX" ]; then
+		NGINXVH_WANT_INSTALL_NGINX=$(echo "$NGINXVH_WANT_INSTALL_NGINX" | grep -i 'y')
+		if [ -z "$NGINXVH_WANT_INSTALL_NGINX" ]; then
 			echo 'Aborting.'
 			exit 1
 		else
