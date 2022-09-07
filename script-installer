@@ -1,0 +1,36 @@
+#!/bin/bash
+
+SCRIPT_INSTALLER_IS_ROOT_RUNNING=$(whoami | grep -i 'root')
+
+if [ -z "$SCRIPT_INSTALLER_IS_ROOT_RUNNING" ]; then
+	echo 'root privileges required!'
+	exit 1
+fi
+
+SCRIPT_INSTALLER_DEFAULT_LOCATION='/usr/local/bin/'
+SCRIPT_INSTALLER_LIST=($(ls))
+
+for index in "${!SCRIPT_INSTALLER_LIST[@]}"; do 
+    [[ "${SCRIPT_INSTALLER_LIST[$index]}" =~ 'README.md' ]] && unset -v 'SCRIPT_INSTALLER_LIST[$index]'
+done
+
+SCRIPT_INSTALLER_LIST=("${SCRIPT_INSTALLER_LIST[@]}")
+
+for index in "${!SCRIPT_INSTALLER_LIST[@]}"; do
+    i=$(( $index + 1 ))
+    echo '['$i'] '${SCRIPT_INSTALLER_LIST[$index]}
+done
+
+printf "Select which to install [1;${#SCRIPT_INSTALLER_LIST[@]}]: "
+read SCRIPT_INSTALLER_SELECTED
+
+SCRIPT_INSTALLER_SELECTED=$(( $SCRIPT_INSTALLER_SELECTED - 1 ))
+
+printf "Select install location [$SCRIPT_INSTALLER_DEFAULT_LOCATION]: "
+read SCRIPT_INSTALLER_LOCATION
+
+if [ -z "$SCRIPT_INSTALLER_LOCATION" ]; then
+    SCRIPT_INSTALLER_LOCATION="$SCRIPT_INSTALLER_DEFAULT_LOCATION"
+fi
+
+cp ${SCRIPT_INSTALLER_LIST[$SCRIPT_INSTALLER_SELECTED]} $SCRIPT_INSTALLER_LOCATION
