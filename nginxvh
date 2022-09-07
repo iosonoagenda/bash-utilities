@@ -79,7 +79,7 @@ else
 		fi
 		echo 'server {' >> $HOSTPATH
 		echo '	listen '$3';' >> $HOSTPATH
-		echo '	server_name 192.168.1.81;' >> $HOSTPATH
+		echo '	server_name _;' >> $HOSTPATH
 		if [ $ISDYN ]
 		then
 			echo '	access_log /var/log/nginx/php.access.log;' >> $HOSTPATH
@@ -149,6 +149,6 @@ else
 		ln -s $HOSTPATH /etc/nginx/sites-enabled/$1
 		service nginx restart
 		chown -R $WWWUSER:www-data /var/www/$1
-		chmod -R 7775 /var/www/$1
+		chmod -R 2775 /var/www/$1
 	fi
 fi
