@@ -10,7 +10,7 @@ fi
 NGINXVH_NGINX_EXISTS=$(which nginx 2>/dev/null)
 NGINXVH_ACL_EXISTS=$(setfacl 2>/dev/null)
 
-if [ -z "$NGINXVH_NGINX_EXISTS" ] or [ -z "$NGINXVH_ACL_EXISTS" ]; then
+if [ -z "$NGINXVH_NGINX_EXISTS" ] || [ -z "$NGINXVH_ACL_EXISTS" ]; then
 	NGINXVH_PMAN=''
 	
 	declare -A NGINXVH_OS_INFO;
