@@ -1,4 +1,4 @@
 #!/bin/bash
 # NOTE: node, npm and yarn should be installed via NVM on non-Windows OS!
 # NOTE: Current folder must be empty!
-npx --yes --package @vue/cli vue create --default --git "Project base" .
+yarn init vue@latest
