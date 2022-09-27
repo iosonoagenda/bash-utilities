@@ -1,14 +1,22 @@
 #!/bin/bash
 
 NGINXVH_IS_ROOT_RUNNING=$(whoami | grep -i 'root')
+NGINXVH_WWWUSER='root'
 
 if [ -z "$NGINXVH_IS_ROOT_RUNNING" ]; then
 	echo 'root privileges required!'
 	exit 1
 fi
 
+nginxvh_permissions() {
+	chown $NGINXVH_WWWUSER:www-data /var/www/$1
+	setfacl -m d:u::rwx /var/www/$1
+	setfacl -m d:g::rwx /var/www/$1
+	setfacl -m d:o::rx /var/www/$1
+}
+
 NGINXVH_NGINX_EXISTS=$(which nginx 2>/dev/null)
-NGINXVH_ACL_EXISTS=$(setfacl 2>/dev/null)
+NGINXVH_ACL_EXISTS=$(which setfacl 2>/dev/null)
 
 if [ -z "$NGINXVH_NGINX_EXISTS" ] || [ -z "$NGINXVH_ACL_EXISTS" ]; then
 	NGINXVH_PMAN=''
@@ -53,36 +61,53 @@ if [ -z "$NGINXVH_NGINX_EXISTS" ] || [ -z "$NGINXVH_ACL_EXISTS" ]; then
 	fi
 fi
 
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
-	echo 'Usage: nginxvh <virtual_host_name> <html|php|wordpress|laravel|remove> [<port>]'
+	echo 'Usage: nginxvh <virtual_host_name|list> <html|php|wordpress|laravel|remove|repair> [<port>]'
 	echo ''
 	echo 'Where:'
-	echo '	port: optional only with remove parameter, otherwise required!'
+	echo '	port: optional only with remove, repair and list parameter, otherwise required!'
 else
-	if [ $2 == 'remove' ]
-	then
+	if [ "$2" == 'remove' ]; then
 		rm /etc/nginx/sites-available/$1
 		rm /etc/nginx/sites-enabled/$1
 		rm -R /var/www/$1
 		service nginx restart
 	else
-		if [ $# -lt 3 ]
-		then
+		if [ $# -lt 3 ] && [ "$2" != 'repair' ] && [ "$1" != 'repair' ] && [ $1 != 'list' ]; then
 			echo 'Fatal Error: missing port.'
 			exit 1
 		fi
-		WWWUSER='root'
+		if [[ -f '/etc/nginxvh.conf' ]]; then
+			NGINXVH_WWWUSER=$(head -n 1 /etc/nginxvh.conf)
+		else
+			read -p '/var/www username to use: ' NGINXVH_WWWUSER
+			echo $NGINXVH_WWWUSER > /etc/nginxvh.conf
+		fi
+		if [ $1 == 'list' ]; then
+			grep listen /etc/nginx/sites-enabled/*
+			exit 0
+		fi
+		if [ $1 == 'repair' ]; then
+			echo 'Repairing all...'
+			NGINXVH_SITES=($(cd /var/www && ls -d *))
+			for NGINXVH_INDEX in "${!NGINXVH_SITES[@]}"; do
+				NGINXVH_SITE="${NGINXVH_SITES[$NGINXVH_INDEX]}"
+				nginxvh_permissions "$NGINXVH_SITE"
+				echo $NGINXVH_SITE' repaired!'
+			done
+			echo 'All repaired!'
+			exit 0
+		fi
+		if [ $2 == 'repair' ]; then
+			nginxvh_permissions $1
+			echo $1' repaired!'
+			exit 0
+		fi
 		PHPV=$(php -v | grep -o -E 'PHP [0-9]+.[0-9]+' | tr [:upper:] [:lower:])
 		ISFMW=($2 == 'wordpress' or $2 == 'laravel')
 		ISDYN=($2 == 'php' or $ISFMW)
 		HOSTPATH="/etc/nginx/sites-available/$1"
-		if [[ -f '/etc/nginxvh.conf' ]]; then
-			WWWUSER=$(head -n 1 /etc/nginxvh.conf)
-		else
-			read -p '/var/www username to use: ' WWWUSER
-			echo $WWWUSER > /etc/nginxvh.conf
-		fi
 		echo 'server {' >> $HOSTPATH
 		echo '	listen '$3';' >> $HOSTPATH
 		echo '	server_name _;' >> $HOSTPATH
@@ -137,10 +162,7 @@ else
 		fi
 		echo '}' >> $HOSTPATH
 		mkdir /var/www/$1
-		chown $WWWUSER:www-data /var/www/$1
-		setfacl -m d:u::rwx /var/www/$1
-		setfacl -m d:g::rwx /var/www/$1
-		setfacl -m d:o::rx /var/www/$1
+		nginxvh_permissions $1
 		if [ $2 == 'php' ]
 		then
 			echo '<?php phpinfo();' >> /var/www/$1/index.php
